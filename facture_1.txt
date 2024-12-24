@@ -1,11 +1,16 @@
 
     BON DE LIVRAISON N° 1
     ---------------------------
-    Clien : Salem
-    Date : 2024-12-24 02:14:17
-    
-    Produit : orange
-    Quantité : 15.0
+    Client : Soprovam
+    Date : 2024-12-24 15:57:36
+
+    Articles Livrés :
+    -----------------
+    - violet (Quantité: 2.0, Prix/Unité: 23.0, Total: 46.00)
+- orange (Quantité: 1.0, Prix/Unité: 15.0, Total: 15.00)
+
+    ---------------------------
+    Total Général : 61.00
 
     Merci pour votre collaboration.
     

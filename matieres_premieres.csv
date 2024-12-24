@@ -1,7 +1,5 @@
 id,nom,reference,quantite
-1,ahmed,aa,40.0
 2,rouge,ROUGE,5.2
 3,vert,VERT,15.0
 4,bleu,BLEU,13.8
-5,rouge,Rouge,0.0
 6,jaune,JAUNE,5.0

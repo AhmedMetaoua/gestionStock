@@ -1,1 +1,1 @@
-id,date_creation,reference,client,articles,total
+id,bon_id,date_creation,client,total,articles

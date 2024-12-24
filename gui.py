@@ -1,5 +1,6 @@
+import json
 import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import END, messagebox, ttk
 from PIL import Image, ImageTk
 import csv
 from tkinter import filedialog
@@ -64,7 +65,21 @@ def get_historique_matiere_produite():
     except Exception as e:
         raise Exception(f"Erreur lors de la récupération de l'historique : {e}")
 
+def get_historique_bon_livraison():
+    """
+    Récupère l'historique des bons de livraison.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
 
+    # Récupérer l'historique des bons avec leurs détails
+    cursor.execute("""
+        SELECT bon_id, articles, total, client, date_creation
+        FROM historique_bon_livraison
+    """)
+    historique = cursor.fetchall()
+    conn.close()
+    return historique
 
 def lancer_interface():
     # Couleurs du thème (rendu un peu plus clair pour simuler la transparence)
@@ -78,7 +93,8 @@ def lancer_interface():
     # Créer la fenêtre principale
     root = tk.Tk()
     root.title("Gestion de Stock")
-    root.geometry("900x700")
+    root.geometry("900x650")
+    root.resizable(False, False)
     root.config(bg=BG_COLOR)
 
     # Charger l'image d'arrière-plan
@@ -147,13 +163,23 @@ def lancer_interface():
     menu = tk.Menu(root)
     root.config(menu=menu)
 
-    menu.add_command(label="Ajouter Matière Première", command=lambda: afficher_section(ajouter_matiere_premiere_ui))
-    menu.add_command(label="Créer Matière Produite", command=lambda: afficher_section(bon_de_commande_ui))
-    menu.add_command(label="Modifier Quantité", command=lambda: afficher_section(modifier_quantite_ui))
-    menu.add_command(label="Ajouter Dosage", command=lambda: afficher_section(ajouter_dosage_ui))
+    # Sous-menu Gestion des Matières
+    menu_gestion = tk.Menu(menu, tearoff=0)
+    menu_gestion.add_command(label="Ajouter Matière Première", command=lambda: afficher_section(ajouter_matiere_premiere_ui))
+    menu_gestion.add_command(label="Modifier Quantité", command=lambda: afficher_section(modifier_quantite_ui))
+    menu_gestion.add_command(label="Ajouter Dosage", command=lambda: afficher_section(ajouter_dosage_ui))
+    menu.add_cascade(label="Gestion des Matières Première", menu=menu_gestion)
+
+    # Sous-menu Affichage
+    menu_affichage = tk.Menu(menu, tearoff=0)
+    menu_affichage.add_command(label="Afficher Tableau Matières", command=lambda: afficher_section(afficher_tableau_ui))
+    menu_affichage.add_command(label="Historique Bon Des Commandes", command=lambda: afficher_section(afficher_historique_ui))
+    menu_affichage.add_command(label="Historique des Bons de Livraison", command=lambda: afficher_section(afficher_historique_bon_livraison_ui))
+    menu.add_cascade(label="Affichage", menu=menu_affichage)
+
+    # Commandes supplémentaires
+    menu.add_command(label="Créer Bon De Commande", command=lambda: afficher_section(bon_de_commande_ui))
     menu.add_command(label="Créer Bon de Livraison", command=lambda: afficher_section(creer_bon_livraison_ui))
-    menu.add_command(label="Afficher Tableau Matières", command=lambda: afficher_section(afficher_tableau_ui))
-    menu.add_command(label="Historique Matières Produites", command=lambda: afficher_section(afficher_historique_ui))
     menu.add_command(label="Exporter en CSV", command=exporter_donnees_csv)
 
 
@@ -210,7 +236,7 @@ def lancer_interface():
             except Exception as e:
                 messagebox.showerror("Erreur", str(e))
 
-        tk.Button(frame_principale, text="Ajouter", bg=BTN_COLOR, fg=BTN_TEXT_COLOR, font=("Arial", 16, "bold"), command=modifier).pack(pady=18, ipadx=18, ipady=8)
+        tk.Button(frame_principale, text="Ajouter", bg=BTN_COLOR, fg=BTN_TEXT_COLOR, font=("Arial", 14, "bold"), command=modifier).pack(pady=16, ipadx=16, ipady=6)
 
     # Section : Ajouter un dosage
     def ajouter_dosage_ui():
@@ -218,7 +244,7 @@ def lancer_interface():
 
         # Combobox pour les noms des matières produites
         matieres_produites = get_suggestions("matieres_produites", "nom")
-        tk.Label(frame_principale, text="Matière Produite (Nom):", bg=BG_COLOR, font=("Arial", 16)).pack()
+        tk.Label(frame_principale, text="Matière Fini (Nom):", bg=BG_COLOR, font=("Arial", 16)).pack()
         matiere_produite_combobox = ttk.Combobox(frame_principale, values=matieres_produites, font=("Arial", 16))
         matiere_produite_combobox.pack(ipadx=10, ipady=5, pady=5)
 
@@ -275,11 +301,11 @@ def lancer_interface():
                 messagebox.showerror("Erreur", str(e))
 
         tk.Button(frame_principale, text="Ajouter Dosage", bg=BTN_COLOR, fg=BTN_TEXT_COLOR, 
-                font=("Arial", 18, "bold"), command=ajouter).pack(pady=20, ipadx=20, ipady=10)
+                font=("Arial", 16, "bold"), command=ajouter).pack(pady=18, ipadx=18, ipady=8)
 
     # Section : Créer une matière produite
     def bon_de_commande_ui():
-        tk.Label(frame_principale, text="Bon De Commande", font=("Arial", 22, "bold"), bg=BG_COLOR).pack(pady=20)
+        tk.Label(frame_principale, text="Crée Bon De Commande", font=("Arial", 22, "bold"), bg=BG_COLOR).pack(pady=20)
 
         tk.Label(frame_principale, text="Nom de la Matière Fini :", bg=BG_COLOR, font=("Arial", 16)).pack()
         nom_entry = tk.Entry(frame_principale, bg=ENTRY_BG, fg=ENTRY_FG, font=("Arial", 16))
@@ -306,78 +332,115 @@ def lancer_interface():
             except Exception as e:
                 messagebox.showerror("Erreur", str(e))
 
-        tk.Button(frame_principale, text="Créer", bg=BTN_COLOR, fg=BTN_TEXT_COLOR, font=("Arial", 18, "bold"), command=creer).pack(pady=20, ipadx=20, ipady=10)
+        tk.Button(frame_principale, text="Créer", bg=BTN_COLOR, fg=BTN_TEXT_COLOR, font=("Arial", 16, "bold"), command=creer).pack(pady=18, ipadx=18, ipady=8)
 
     # Section : Créer un bon de livraison
     def creer_bon_livraison_ui():
         tk.Label(frame_principale, text="Créer Bon de Livraison", font=("Arial", 22, "bold"), bg=BG_COLOR).pack(pady=20)
-
-        # Combobox pour les noms des matières produites
+        
+        # Liste des matières produites disponibles
         matieres_produites = get_suggestions("matieres_produites", "nom")
-        tk.Label(frame_principale, text="Matière Fini (Nom):", bg=BG_COLOR, font=("Arial", 16)).pack()
-        matiere_produite_combobox = ttk.Combobox(frame_principale, values=matieres_produites, font=("Arial", 16))
+
+        # Table pour ajouter les articles
+        columns = ("Matière Fini", "Quantité")
+        treeview = ttk.Treeview(frame_principale, columns=columns, show="headings", height=4)
+        for col in columns:
+            treeview.heading(col, text=col, anchor="center")
+            treeview.column(col, anchor="center", width=150)
+        treeview.pack(pady=10, padx=20)
+
+        # Entrées pour ajouter un article
+        tk.Label(frame_principale, text="Matière Fini :", bg=BG_COLOR, font=("Arial", 14)).pack()
+        matiere_produite_combobox = ttk.Combobox(frame_principale, values=matieres_produites, font=("Arial", 14))
         matiere_produite_combobox.pack(ipadx=10, ipady=5, pady=5)
 
-        tk.Label(frame_principale, text="Quantité (Kg ou Litre):", bg=BG_COLOR, font=("Arial", 16)).pack()
-        quantite_entry = tk.Entry(frame_principale, bg=ENTRY_BG, fg=ENTRY_FG, font=("Arial", 16))
+        tk.Label(frame_principale, text="Quantité (Kg ou Litre):", bg=BG_COLOR, font=("Arial", 14)).pack()
+        quantite_entry = tk.Entry(frame_principale, font=("Arial", 14))
         quantite_entry.pack(ipadx=10, ipady=5, pady=5)
+
+        def ajouter_article():
+            matiere_produite = matiere_produite_combobox.get()
+            quantite = quantite_entry.get()
+            if matiere_produite and quantite:
+                treeview.insert("", "end", values=(matiere_produite, quantite))
+                matiere_produite_combobox.set("")
+                quantite_entry.delete(0, tk.END)
+
+        tk.Button(frame_principale, text="Ajouter Article", bg=BTN_COLOR, fg=BTN_TEXT_COLOR, font=("Arial", 14), command=ajouter_article).pack(pady=10)
+
+        # Bouton pour créer le bon de livraison
+        def creer_bon():
+            articles = [
+                {"matiere_produite_nom": treeview.item(item)["values"][0], "quantite": float(treeview.item(item)["values"][1])}
+                for item in treeview.get_children()
+            ]
+            client = client_entry.get()
+            if not client :
+                messagebox.showinfo("Entrée manquante","Ajouter Des Article")
+                return
+            if not articles:
+                messagebox.showinfo("Entrée manquante","Entrer Le Champs Client")
+                return
+            try:
+                message = creer_bon_livraison(articles, client)
+                messagebox.showinfo("Succès", message)
+                treeview.delete(*treeview.get_children())
+                client_entry.delete(0, END)
+            except Exception as e:
+                messagebox.showerror("Erreur", str(e))
 
         tk.Label(frame_principale, text="Client :", bg=BG_COLOR, font=("Arial", 16)).pack()
         client_entry = tk.Entry(frame_principale, bg=ENTRY_BG, fg=ENTRY_FG, font=("Arial", 16))
         client_entry.pack(ipadx=10, ipady=5, pady=5)
 
-        def creer():
-            matiere_produite = matiere_produite_combobox.get()
-            quantite = quantite_entry.get()
-            client = client_entry.get()
-            try:
-                creer_bon_livraison(matiere_produite, float(quantite), client)
-                messagebox.showinfo("Succès", "Bon de livraison créé avec succès.")
-                matiere_produite_combobox.set('')
-                quantite_entry.set('')
-                client_entry.set('')
-            except Exception as e:
-                messagebox.showerror("Erreur", str(e))
-
-        tk.Button(frame_principale, text="Créer Bon de Livraison", bg=BTN_COLOR, fg=BTN_TEXT_COLOR, font=("Arial", 18, "bold"), command=creer).pack(pady=20, ipadx=20, ipady=10)
+        tk.Button(frame_principale, text="Créer Bon de Livraison", bg=BTN_COLOR, fg=BTN_TEXT_COLOR, font=("Arial", 16, "bold"), command=creer_bon).pack(pady=20, ipadx=10, ipady=5)
 
     # Section : Afficher un tableau pour les matières premières et produites
     def afficher_tableau_ui():
+        style = ttk.Style()
+        style.configure("Treeview", rowheight=20)  # Définit une hauteur de ligne de 40 pixels
+
         # Titre pour les matières premières
-        tk.Label(frame_principale, text="Tableau des Matières Premières", font=("Arial", 18, "bold"), bg=BG_COLOR).pack(pady=12)
+        tk.Label(frame_principale, text="Tableau des Matières Premières", font=("Arial", 18, "bold"), bg=BG_COLOR).pack(pady=10)
         
         # Récupérer les données des matières premières depuis la base de données
         matieres_premieres = get_table_data("matieres_premieres")
 
         # Tableau des matières premières
         columns_1 = ("ID", "Nom", "Référence", "Quantité")
-        treeview_1 = ttk.Treeview(frame_principale, columns=columns_1, show="headings", height=10)
-        treeview_1.pack(pady=10, padx=20)
+        treeview_1 = ttk.Treeview(frame_principale, columns=columns_1, show="headings", height=7)
+        treeview_1.pack(pady=8, padx=18)
 
         # Définir les en-têtes et colonnes
-        for col in columns_1:
+        column_widths = [100, 160, 160, 100]  # Largeurs spécifiques pour chaque colonne
+        for col, width in zip(columns_1, column_widths):
             treeview_1.heading(col, text=col, anchor="center")
-            treeview_1.column(col, anchor="center", width=150)
-
+            treeview_1.column(col, anchor="center", width=width)
+            
+        # Configurer des couleurs pour les lignes
+        style = ttk.Style()
+        style.configure("Treeview", background="lightgray", fieldbackground="lightblue", foreground="black")
+        
         # Remplir le tableau avec les données
         for row in matieres_premieres:
             treeview_1.insert("", "end", values=row)
 
         # Titre pour les matières produites
-        tk.Label(frame_principale, text="Tableau des Matières Produites", font=("Arial", 18, "bold"), bg=BG_COLOR).pack(pady=12)
+        tk.Label(frame_principale, text="Tableau des Matières Finis", font=("Arial", 18, "bold"), bg=BG_COLOR).pack(pady=10)
 
         # Récupérer les données des matières produites depuis la base de données
         matieres_produites = get_table_data("matieres_produites")
 
         # Tableau des matières produites
         columns_2 = ("ID", "Nom", "Référence", "Quantité", "Prix Unité")
-        treeview_2 = ttk.Treeview(frame_principale, columns=columns_2, show="headings", height=10)
-        treeview_2.pack(pady=10, padx=20)
+        treeview_2 = ttk.Treeview(frame_principale, columns=columns_2, show="headings", height=7)
+        treeview_2.pack(pady=8, padx=18)
 
         # Définir les en-têtes et colonnes
-        for col in columns_2:
+        column_widths = [100, 150, 180, 180, 100]  # Largeurs spécifiques pour chaque colonne
+        for col, width in zip(columns_2, column_widths):
             treeview_2.heading(col, text=col, anchor="center")
-            treeview_2.column(col, anchor="center", width=150)
+            treeview_2.column(col, anchor="center", width=width)
 
         # Remplir le tableau avec les données
         for row in matieres_produites:
@@ -387,27 +450,31 @@ def lancer_interface():
         def retour():
             afficher_section(ajouter_matiere_premiere_ui)
 
-        tk.Button(frame_principale, text="Retour", bg=BTN_COLOR, fg=BTN_TEXT_COLOR, font=("Arial", 16, "bold"), command=retour).pack(pady=20, ipadx=20, ipady=10)
+        tk.Button(frame_principale, text="Retour", bg=BTN_COLOR, fg=BTN_TEXT_COLOR, font=("Arial", 16, "bold"), command=retour).pack(pady=18, ipadx=18, ipady=8)
         
 
 
     # Section : Afficher un tableau pour l'historique des bon de commande
     def afficher_historique_ui():
+        style = ttk.Style()
+        style.configure("Treeview", rowheight=20)  # Définit une hauteur de ligne de 40 pixels
+
         # Titre
-        tk.Label(frame_principale, text="Historique des Bon De Commande", font=("Arial", 22, "bold"), bg=BG_COLOR).pack(pady=20)
+        tk.Label(frame_principale, text="Historique des Bon De Commande", font=("Arial", 20, "bold"), bg=BG_COLOR).pack(pady=18)
         
         # Récupérer l'historique depuis la base de données
         historique = get_historique_matiere_produite()
 
         # Tableau pour afficher l'historique
         columns = ("ID", "Nom", "Quantité", "Date de Création")
-        treeview = ttk.Treeview(frame_principale, columns=columns, show="headings", height=15)
+        treeview = ttk.Treeview(frame_principale, columns=columns, show="headings", height=12)
         treeview.pack(pady=10, padx=20)
 
         # Définir les en-têtes de colonnes
-        for col in columns:
+        column_widths = [100, 160, 100, 180]  # Largeurs spécifiques pour chaque colonne
+        for col, width in zip(columns, column_widths):
             treeview.heading(col, text=col, anchor="center")
-            treeview.column(col, anchor="center", width=150)
+            treeview.column(col, anchor="center", width=width)
 
         # Remplir le tableau avec l'historique des matières produites
         for row in historique:
@@ -417,8 +484,49 @@ def lancer_interface():
         def retour():
             afficher_section(ajouter_matiere_premiere_ui)
 
-        tk.Button(frame_principale, text="Retour", bg=BTN_COLOR, fg=BTN_TEXT_COLOR, font=("Arial", 16, "bold"), command=retour).pack(pady=18, ipadx=18, ipady=8)
+        tk.Button(frame_principale, text="Retour", bg=BTN_COLOR, fg=BTN_TEXT_COLOR, font=("Arial", 14, "bold"), command=retour).pack(pady=16, ipadx=16, ipady=8)
 
+
+    def afficher_historique_bon_livraison_ui():
+
+        style = ttk.Style()
+        style.configure("Treeview", rowheight=45)  # Définit une hauteur de ligne de 40 pixels
+
+        # Titre
+        tk.Label(frame_principale, text="Historique des Bons de Livraison", font=("Arial", 20, "bold"), bg=BG_COLOR).pack(pady=18)
+
+        # Récupérer l'historique depuis la base de données
+        historique = get_historique_bon_livraison()
+
+        # Tableau pour afficher l'historique
+        columns = ("ID Bon", "Matières Produites", "Prix Total", "Client", "Date de Création")
+        treeview = ttk.Treeview(frame_principale, columns=columns, show="headings", height=8)
+        treeview.pack(pady=10, padx=20)
+
+        # Définir les en-têtes de colonnes
+        column_widths = [100, 200, 100, 100, 160]  # Largeurs spécifiques pour chaque colonne
+        for col, width in zip(columns, column_widths):
+            treeview.heading(col, text=col, anchor="center")
+            treeview.column(col, anchor="center", width=width)
+
+        # Remplir le tableau avec l'historique des bons de livraison
+        for row in historique:
+            bon_id, articles_json, total, client, date_creation = row
+
+            # Convertir les articles JSON en texte lisible
+            articles = json.loads(articles_json)
+            articles_str = "\n".join([
+                f"{article['nom']} (Quantité: {article['quantite']}, Total: {article['total']:.2f})"
+                for article in articles
+            ])
+
+            treeview.insert("", "end", values=(bon_id, articles_str, f"{total:.2f}", client, date_creation))
+        
+        # Ajouter un bouton pour revenir à l'interface principale
+        def retour():
+            afficher_section(ajouter_matiere_premiere_ui)
+
+        tk.Button(frame_principale, text="Retour", bg=BTN_COLOR, fg=BTN_TEXT_COLOR, font=("Arial", 14, "bold"), command=retour).pack(pady=16, ipadx=16, ipady=6)
 
     # Lancer l'application avec une section par défaut
     afficher_section(ajouter_matiere_premiere_ui)

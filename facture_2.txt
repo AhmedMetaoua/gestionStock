@@ -1,13 +1,15 @@
 
     BON DE LIVRAISON N° 2
     ---------------------------
-    Clien : Ahmed
-    Date : 2024-12-24 02:21:56
-    
-    Produit : orange
-    Quantité : 2.0
-    Prix/Unité : 15.0
-    Total : 30.0
+    Client : Test
+    Date : 2024-12-24 15:58:26
+
+    Articles Livrés :
+    -----------------
+    - violet (Quantité: 0.5, Prix/Unité: 23.0, Total: 11.50)
+
+    ---------------------------
+    Total Général : 11.50
 
     Merci pour votre collaboration.
     

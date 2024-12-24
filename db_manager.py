@@ -35,11 +35,12 @@ def init_db():
 
 
     # Table des bons de livraison
+    # cursor.execute('''DROP TABLE IF EXISTS bons_livraison;''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS bons_livraison (
         id INTEGER PRIMARY KEY,
-        matiere_produite_id INTEGER NOT NULL,
-        quantite REAL NOT NULL,
-        date TEXT NOT NULL,
+        matiere_produite_id INTEGER ,
+        quantite REAL ,
+        date TEXT ,
         client TEXT NOT NULL,
         FOREIGN KEY (matiere_produite_id) REFERENCES matieres_produites(id)
     )''')
@@ -49,19 +50,32 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nom TEXT NOT NULL,
         quantite REAL NOT NULL,
-        date_creation    DEFAULT CURRENT_TIMESTAMP
+        date_creation DEFAULT CURRENT_TIMESTAMP
     )''')
 
     # Table d'historique de bon de livraison'
-    cursor.execute('''CREATE TABLE historique_bon_livraison (
+    # cursor.execute("ALTER TABLE historique_bon_livraison ADD COLUMN articles TEXT;")
+    # cursor.execute('''DROP TABLE IF EXISTS historique_bon_livraison;''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS historique_bon_livraison (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        bon_id INTEGER NOT NULL,
         date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        reference TEXT NOT NULL,
         client TEXT NOT NULL,
-        articles TEXT NOT NULL, -- JSON ou texte contenant les détails des articles
-        total REAL NOT NULL
+        total REAL NOT NULL,
+        articles TEXT,
+        FOREIGN KEY (bon_id) REFERENCES bons_livraison (id)
     )''')
-    
+
+        # matiere_produite_nom TEXT NOT NULL,
+        # quantite REAL NOT NULL,
+    cursor.execute('''CREATE TABLE IF NOT EXISTS details_bon_livraison (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        bon_livraison_id INTEGER,
+        matiere_produite_id INTEGER,
+        quantite REAL,
+        FOREIGN KEY (bon_livraison_id) REFERENCES bons_livraison(id),
+        FOREIGN KEY (matiere_produite_id) REFERENCES matieres_produites(id)
+    )''')
 
 
     conn.commit()

@@ -1,4 +1,5 @@
 from db_manager import get_connection
+import json
 import datetime
 
 def ajouter_matiere_premiere(nom, reference, quantite):
@@ -117,61 +118,128 @@ def creer_bon_de_commande(nom, quantite, prix):
     conn.close()
 
 
-def creer_bon_livraison(matiere_produite_nom, quantite, clien):
+def creer_bon_livraison(articles, client):
+    """
+    Crée un bon de livraison pour plusieurs matières produites.
+    Annule les modifications en cas d'erreur.
+    :param articles: Liste de dictionnaires {"matiere_produite_nom": str, "quantite": float}
+    :param client: Nom du client
+    :return: Contenu de la facture générée
+    """
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Vérifier la disponibilité de la matière produite
-    cursor.execute("SELECT id, quantite FROM matieres_produites WHERE nom = ?", (matiere_produite_nom,))
-    result = cursor.fetchone()
-    if not result:
-        raise ValueError("Matière produite non trouvée")
-    
-    matiere_produite_id, quantite_disponible = result
+    try:
+        # Démarrer une transaction
+        conn.execute("BEGIN TRANSACTION")
 
-    if quantite_disponible < quantite:
-        raise ValueError("Quantité insuffisante pour le bon de livraison")
+        date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Réduire la quantité de la matière produite
-    cursor.execute("UPDATE matieres_produites SET quantite = quantite - ? WHERE id = ?", (quantite, matiere_produite_id))
+        # Créer un bon de livraison (sans les détails pour l'instant)
+        cursor.execute("INSERT INTO bons_livraison (date, client) VALUES (?, ?)", (date, client))
+        bon_id = cursor.lastrowid
 
-    # Créer un bon de livraison
-    date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    cursor.execute("INSERT INTO bons_livraison (matiere_produite_id, quantite, date, client) VALUES (?, ?, ?, ?)",
-                   (matiere_produite_id, quantite, date, clien))
+        total_general = 0.0  # Pour calculer le montant total de la facture
+        details_facture = []  # Stocker les lignes de facture
+        articles_historique = []  # Stocker les détails des articles pour l'historique
 
-    # Générer un ID pour la facture
-    bon_id = cursor.lastrowid
-    facture = generer_facture(bon_id, matiere_produite_nom, quantite, clien)
+        for article in articles:
+            matiere_produite_nom = article["matiere_produite_nom"]
+            quantite = article["quantite"]
 
-    conn.commit()
-    conn.close()
-    return facture
+            # Vérifier la disponibilité de la matière produite
+            cursor.execute("SELECT id, quantite, prix_unitaire FROM matieres_produites WHERE nom = ?", (matiere_produite_nom,))
+            result = cursor.fetchone()
+            if not result:
+                raise ValueError(f"Matière produite '{matiere_produite_nom}' non trouvée")
+            
+            matiere_produite_id, quantite_disponible, prix_unitaire = result
 
-def generer_facture(bon_id, matiere_produite_nom, quantite, clien):
-    conn = get_connection()
-    cursor = conn.cursor()
+            if quantite_disponible < quantite:
+                raise ValueError(f"Quantité insuffisante pour '{matiere_produite_nom}'")
+                
+            # Réduire la quantité de la matière produite
+            cursor.execute(
+                "UPDATE matieres_produites SET quantite = quantite - ? WHERE id = ?", 
+                (quantite, matiere_produite_id)
+            )
 
-    cursor.execute("SELECT prix_unitaire FROM matieres_produites WHERE nom = ?", (matiere_produite_nom,))
-    result = cursor.fetchone()[0]
-    # Exemple simple de génération de facture
+            # Ajouter les détails du bon de livraison
+            cursor.execute(
+                "INSERT INTO details_bon_livraison (bon_livraison_id, matiere_produite_id, quantite) VALUES (?, ?, ?)", 
+                (bon_id, matiere_produite_id, quantite)
+            )
+
+            # Calculer le total pour cet article
+            total_article = prix_unitaire * quantite
+            total_general += total_article
+
+            # Ajouter les détails à la facture
+            details_facture.append(f"{matiere_produite_nom} (Quantité: {quantite}, Prix/Unité: {prix_unitaire}, Total: {total_article:.2f})")
+
+            # Ajouter les articles à l'historique
+            articles_historique.append({
+                "nom": matiere_produite_nom,
+                "quantite": quantite,
+                "prix_unitaire": prix_unitaire,
+                "total": total_article
+            })
+
+        # Ajouter une entrée dans l'historique
+        cursor.execute(
+            "INSERT INTO historique_bon_livraison (bon_id, client, date_creation, total, articles) VALUES (?, ?, ?, ?, ?)", 
+            (bon_id, client, date, total_general, json.dumps(articles_historique))
+        )
+
+        # Valider la transaction si tout est correct
+        conn.commit()
+
+        # Générer et retourner la facture
+        return generer_facture(bon_id, client, date, details_facture, total_general)
+
+    except Exception as e:
+        # Annuler toutes les modifications si une erreur survient
+        conn.rollback()
+        raise e
+
+    finally:
+        # Fermer la connexion
+        conn.close()
+
+
+def generer_facture(bon_id, client, date, details, total_general):
+    """
+    Génère une facture consolidée pour un bon de livraison.
+    :param bon_id: ID du bon de livraison
+    :param client: Nom du client
+    :param date: Date de création
+    :param details: Liste des détails (articles) de la facture
+    :param total_general: Total général de la facture
+    :return: Contenu de la facture générée
+    """
+    # Construire le contenu de la facture
     facture = f"""
     BON DE LIVRAISON N° {bon_id}
     ---------------------------
-    Clien : {clien}
-    Date : {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-    
-    Produit : {matiere_produite_nom}
-    Quantité : {quantite}
-    Prix/Unité : {result}
-    Total : {float(result) * quantite}
+    Client : {client}
+    Date : {date}
+
+    Articles Livrés :
+    -----------------
+    """
+    for detail in details:
+        facture += f"- {detail}\n"
+
+    facture += f"""
+    ---------------------------
+    Total Général : {total_general:.2f}
 
     Merci pour votre collaboration.
     """
-    # Optionnel : Sauvegarder la facture dans un fichier texte
+
+    # Sauvegarder la facture dans un fichier texte
     with open(f"facture_{bon_id}.txt", "w", encoding="utf-8") as file:
         file.write(facture)
 
-    conn.commit()
-    conn.close()
     return facture
+

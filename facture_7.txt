@@ -1,0 +1,14 @@
+
+    BON DE LIVRAISON N° 7
+    ---------------------------
+    Client : AAA
+    Date : 2024-12-24 15:25:01
+
+    Articles Livrés :
+    -----------------
+    
+    ---------------------------
+    Total Général : 0.00
+
+    Merci pour votre collaboration.
+    
