@@ -7,6 +7,7 @@ def init_db():
     cursor = conn.cursor()
 
     # Table des matières premières
+    # cursor.execute('''DELETE FROM matieres_premieres WHERE id = ?;''', (9,))
     cursor.execute('''CREATE TABLE IF NOT EXISTS matieres_premieres (
         id INTEGER PRIMARY KEY,
         nom TEXT NOT NULL,

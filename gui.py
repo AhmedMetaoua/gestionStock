@@ -205,8 +205,9 @@ def lancer_interface():
             try:
                 ajouter_matiere_premiere(nom, ref, float(quantite))
                 messagebox.showinfo("Succès", "Matière première ajoutée avec succès.")
-                nom_entry.set('')
-                ref_entry.set('')
+                nom_entry.delete(0, END)
+                ref_entry.delete(0, END)
+                quantite_entry.delete(0, END)
             except Exception as e:
                 messagebox.showerror("Erreur", str(e))
 
@@ -232,7 +233,7 @@ def lancer_interface():
                 modifier_quantite_matiere_premiere(identifiant, float(quantite))
                 messagebox.showinfo("Succès", "Quantité modifiée avec succès.")
                 identifiant_combobox.set('')
-                quantite_entry.set('')
+                quantite_entry.delete(0, END)
             except Exception as e:
                 messagebox.showerror("Erreur", str(e))
 
@@ -244,7 +245,7 @@ def lancer_interface():
 
         # Combobox pour les noms des matières produites
         matieres_produites = get_suggestions("matieres_produites", "nom")
-        tk.Label(frame_principale, text="Matière Fini (Nom):", bg=BG_COLOR, font=("Arial", 16)).pack()
+        tk.Label(frame_principale, text="Produit Fini (Nom):", bg=BG_COLOR, font=("Arial", 16)).pack()
         matiere_produite_combobox = ttk.Combobox(frame_principale, values=matieres_produites, font=("Arial", 16))
         matiere_produite_combobox.pack(ipadx=10, ipady=5, pady=5)
 
@@ -307,9 +308,12 @@ def lancer_interface():
     def bon_de_commande_ui():
         tk.Label(frame_principale, text="Crée Bon De Commande", font=("Arial", 22, "bold"), bg=BG_COLOR).pack(pady=20)
 
-        tk.Label(frame_principale, text="Nom de la Matière Fini :", bg=BG_COLOR, font=("Arial", 16)).pack()
-        nom_entry = tk.Entry(frame_principale, bg=ENTRY_BG, fg=ENTRY_FG, font=("Arial", 16))
-        nom_entry.pack(ipadx=10, ipady=5, pady=5)
+        matieres_produites = get_suggestions("matieres_produites", "nom")
+        # Entrées pour ajouter un article
+
+        tk.Label(frame_principale, text="Nom de Produit Fini :", bg=BG_COLOR, font=("Arial", 16)).pack()
+        matiere_produite_combobox = ttk.Combobox(frame_principale, values=matieres_produites, font=("Arial", 14))
+        matiere_produite_combobox.pack(ipadx=10, ipady=5, pady=5)
 
         tk.Label(frame_principale, text="Quantité (Kg ou Litre):", bg=BG_COLOR, font=("Arial", 16)).pack()
         qte_entry = tk.Entry(frame_principale, bg=ENTRY_BG, fg=ENTRY_FG, font=("Arial", 16))
@@ -320,15 +324,15 @@ def lancer_interface():
         prix_entry.pack(ipadx=10, ipady=5, pady=5)
 
         def creer():
-            nom = nom_entry.get()
+            nom = matiere_produite_combobox.get()
             qte = qte_entry.get()
             prix = prix_entry.get()
             try:
                 creer_bon_de_commande(nom, float(qte), float(prix))
                 messagebox.showinfo("Succès", "Bon De Commande crée avec succès.")
-                nom_entry.set('')
-                qte_entry.set('')
-                prix_entry.set('')
+                matiere_produite_combobox.set('')
+                qte_entry.delete(0, END)
+                prix_entry.delete(0, END)
             except Exception as e:
                 messagebox.showerror("Erreur", str(e))
 
@@ -342,7 +346,7 @@ def lancer_interface():
         matieres_produites = get_suggestions("matieres_produites", "nom")
 
         # Table pour ajouter les articles
-        columns = ("Matière Fini", "Quantité")
+        columns = ("Produit Fini", "Quantité")
         treeview = ttk.Treeview(frame_principale, columns=columns, show="headings", height=4)
         for col in columns:
             treeview.heading(col, text=col, anchor="center")
@@ -350,7 +354,7 @@ def lancer_interface():
         treeview.pack(pady=10, padx=20)
 
         # Entrées pour ajouter un article
-        tk.Label(frame_principale, text="Matière Fini :", bg=BG_COLOR, font=("Arial", 14)).pack()
+        tk.Label(frame_principale, text="Produit Fini :", bg=BG_COLOR, font=("Arial", 14)).pack()
         matiere_produite_combobox = ttk.Combobox(frame_principale, values=matieres_produites, font=("Arial", 14))
         matiere_produite_combobox.pack(ipadx=10, ipady=5, pady=5)
 
@@ -426,7 +430,7 @@ def lancer_interface():
             treeview_1.insert("", "end", values=row)
 
         # Titre pour les matières produites
-        tk.Label(frame_principale, text="Tableau des Matières Finis", font=("Arial", 18, "bold"), bg=BG_COLOR).pack(pady=10)
+        tk.Label(frame_principale, text="Tableau des Produits Finis", font=("Arial", 18, "bold"), bg=BG_COLOR).pack(pady=10)
 
         # Récupérer les données des matières produites depuis la base de données
         matieres_produites = get_table_data("matieres_produites")
@@ -499,7 +503,7 @@ def lancer_interface():
         historique = get_historique_bon_livraison()
 
         # Tableau pour afficher l'historique
-        columns = ("ID Bon", "Matières Produites", "Prix Total", "Client", "Date de Création")
+        columns = ("ID Bon", "Produites Finis", "Prix Total", "Client", "Date de Création")
         treeview = ttk.Treeview(frame_principale, columns=columns, show="headings", height=8)
         treeview.pack(pady=10, padx=20)
 

@@ -3,3 +3,5 @@ id,nom,reference,quantite
 3,vert,VERT,15.0
 4,bleu,BLEU,13.8
 6,jaune,JAUNE,5.0
+7,eau,h2o,910.0
+8,hypochlorite,ch3,5.0

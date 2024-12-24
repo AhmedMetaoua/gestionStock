@@ -1,13 +1,15 @@
 
     BON DE LIVRAISON N° 3
     ---------------------------
-    Client : Soprovam
-    Date : 2024-12-24 12:32:27
-    
-    Produit : violet
-    Quantité : 6.0
-    Prix/Unité : 23.0
-    Total : 138.0
+    Client : Salem
+    Date : 2024-12-24 20:46:22
+
+    Articles Livrés :
+    -----------------
+    - javel (Quantité: 50.0, Prix/Unité: 0.5, Total: 25.00)
+
+    ---------------------------
+    Total Général : 25.00
 
     Merci pour votre collaboration.
     

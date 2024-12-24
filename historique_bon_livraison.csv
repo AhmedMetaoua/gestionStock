@@ -1,1 +1,4 @@
 id,bon_id,date_creation,client,total,articles
+1,1,2024-12-24 15:57:36,Soprovam,61.0,"[{""nom"": ""violet"", ""quantite"": 2.0, ""prix_unitaire"": 23.0, ""total"": 46.0}, {""nom"": ""orange"", ""quantite"": 1.0, ""prix_unitaire"": 15.0, ""total"": 15.0}]"
+2,2,2024-12-24 15:58:26,Test,11.5,"[{""nom"": ""violet"", ""quantite"": 0.5, ""prix_unitaire"": 23.0, ""total"": 11.5}]"
+3,3,2024-12-24 20:46:22,Salem,25.0,"[{""nom"": ""javel"", ""quantite"": 50.0, ""prix_unitaire"": 0.5, ""total"": 25.0}]"

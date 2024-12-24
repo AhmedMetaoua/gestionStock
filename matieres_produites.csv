@@ -1,3 +1,4 @@
 id,nom,reference,quantite,prix_unitaire
-3,orange,REF-ORANGE,1.0,15.0
-4,violet,REF-VIOLET,6.5,23.0
+3,orange,REF-ORANGE,0.0,15.0
+4,violet,REF-VIOLET,4.0,23.0
+5,javel,REF-JAVEL,50.0,0.5
