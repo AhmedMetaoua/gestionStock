@@ -1,0 +1,5 @@
+id,nom,reference,quantite,prix_unitaire
+1,a,REF-A,0.0,0.0
+2,oranger,REF-ORANGER,0.0,0.0
+3,orange,REF-ORANGE,3.0,15.0
+4,violet,REF-VIOLET,16.0,23.0

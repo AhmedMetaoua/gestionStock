@@ -1,0 +1,13 @@
+
+    BON DE LIVRAISON N° 2
+    ---------------------------
+    Clien : Ahmed
+    Date : 2024-12-24 02:21:56
+    
+    Produit : orange
+    Quantité : 2.0
+    Prix/Unité : 15.0
+    Total : 30.0
+
+    Merci pour votre collaboration.
+    

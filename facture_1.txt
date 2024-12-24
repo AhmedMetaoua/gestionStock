@@ -1,0 +1,11 @@
+
+    BON DE LIVRAISON N° 1
+    ---------------------------
+    Clien : Salem
+    Date : 2024-12-24 02:14:17
+    
+    Produit : orange
+    Quantité : 15.0
+
+    Merci pour votre collaboration.
+    

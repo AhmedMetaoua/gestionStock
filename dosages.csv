@@ -1,0 +1,5 @@
+id,matiere_produite_reference,matiere_premiere_id,proportion
+1,REF-ORANGE,2,0.5
+2,REF-ORANGE,6,0.5
+3,REF-VIOLET,2,0.3
+4,REF-VIOLET,4,0.7
